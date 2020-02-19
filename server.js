@@ -3,11 +3,15 @@ const expressGraphQL = require('express-graphql');
 const {
    GraphQLSchema,
    GraphQLObjectType,
-   GraphQLString
+   GraphQLString,
+   GraphQLList,
+   GraphQLInt,
+   GraphQLNonNull,
 } = require('graphql');
 
 const app = express();
 
+// placeholder data
 const authors = [
 	{ id: 1, name: 'J. K. Rowling' },
 	{ id: 2, name: 'J. R. R. Tolkien' },
@@ -24,17 +28,30 @@ const books = [
 	{ id: 7, name: 'The Way of Shadows', authorId: 3 },
 	{ id: 8, name: 'Beyond the Shadows', authorId: 3 }
 ]
+const BookType = new GraphQLObjectType({
+   name: 'Book',
+   description: 'This represents a book written by an author',
+   fields: () => ({
+      id: {type: GraphQLNonNull(GraphQLInt)},
+      name: {type: GraphQLNonNull(GraphQLString)},
+      authorId: {type: GraphQLNonNull(GraphQLInt)}
+   })
+})
+// create objects
+const RootQueryType = new GraphQLObjectType({
+   name: 'Query',
+   description: 'Root Query',
+   fields: () => ({
+      books: {
+         type: new GraphQLList (BookType),
+         description: 'List of books',
+         resolve: () => books
+      }
+   })
+});
 
 const schema = new GraphQLSchema ({
-   query: new GraphQLObjectType({
-      name: 'HelloWorld',
-      fields: () => ({ // fileds that hello world returns
-         message: { // is object
-            type: GraphQLString, // HelloWorld object has message object and that is string type
-            resolve: () => 'Hello World', // message as function which tell grphql where to get message
-         }
-      })
-   })
+   query: RootQueryType
 })
 app.use('/graphql', expressGraphQL({
    schema: schema, // passing above's defined schema obey here
